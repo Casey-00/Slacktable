@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     
     # Airtable Configuration
     airtable_api_token: str = Field(..., env="AIRTABLE_API_TOKEN")
-    airtable_base_id: str = Field(default="app8JlYvQ0jwjT5dD", env="AIRTABLE_BASE_ID")
-    airtable_table_name: str = Field(default="Bugs", env="AIRTABLE_TABLE_NAME")
-    airtable_field_name: str = Field(default="Name", env="AIRTABLE_FIELD_NAME")
+    airtable_base_id: str = Field(..., env="AIRTABLE_BASE_ID")
+    airtable_table_name: str = Field(..., env="AIRTABLE_TABLE_NAME")
+    airtable_field_name: str = Field(..., env="AIRTABLE_FIELD_NAME")
     
     # App Configuration
     environment: str = Field(default="development", env="ENVIRONMENT")

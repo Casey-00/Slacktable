@@ -77,8 +77,8 @@ In your deployment environment (Vercel), set these environment variables:
 ```env
 AIRTABLE_API_TOKEN=pat-your-personal-access-token
 AIRTABLE_BASE_ID=your-base-id-here
-AIRTABLE_TABLE_NAME=Bugs
-AIRTABLE_FIELD_NAME=Name
+AIRTABLE_TABLE_NAME=your-table-name
+AIRTABLE_FIELD_NAME=your-field-name
 ```
 
 ## Step 7: Verify the Integration
