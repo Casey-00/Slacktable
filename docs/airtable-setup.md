@@ -42,7 +42,7 @@ This guide walks you through setting up your Airtable base and API access for Sl
    ```
 4. Copy this Base ID (it starts with `app`)
 
-**Note**: Your Base ID is already configured in the app as `app8JlYvQ0jwjT5dD`. If your base has a different ID, you'll need to update the environment variable.
+**Note**: You'll need to set your Base ID in the environment variables when deploying.
 
 ## Step 4: Create an API Token
 
@@ -76,7 +76,7 @@ In your deployment environment (Vercel), set these environment variables:
 
 ```env
 AIRTABLE_API_TOKEN=pat-your-personal-access-token
-AIRTABLE_BASE_ID=app8JlYvQ0jwjT5dD
+AIRTABLE_BASE_ID=your-base-id-here
 AIRTABLE_TABLE_NAME=Bugs
 AIRTABLE_FIELD_NAME=Name
 ```
