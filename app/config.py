@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Slack Configuration
     slack_bot_token: str = Field(..., env="SLACK_BOT_TOKEN")
     slack_signing_secret: str = Field(..., env="SLACK_SIGNING_SECRET")
-    slack_app_token: str = Field(..., env="SLACK_APP_TOKEN")
+    slack_app_token: str = Field(default="", env="SLACK_APP_TOKEN")
     
     # Airtable Configuration
     airtable_api_token: str = Field(..., env="AIRTABLE_API_TOKEN")
