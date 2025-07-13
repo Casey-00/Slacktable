@@ -4,13 +4,13 @@ A Python-based Slack app that automatically sends tagged messages to Airtable wh
 
 ## Overview
 
-Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatically creates records in your Airtable "Bugs" table with the message content. Perfect for quickly collecting bug reports, feature requests, or any important messages from your team conversations.
+Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatically creates records in your Airtable table with the message content. Perfect for quickly collecting bug reports, feature requests, or any important messages from your team conversations.
 
 ## Features
 
 - 🚚 React with `:fedex:` emoji to tag messages
 - 📝 Automatically extracts message text
-- 🗃️ Creates records in Airtable "Bugs" table
+- 🗃️ Creates records in Airtable table
 - 🔒 Secure token management via environment variables
 - 📊 Comprehensive logging and error handling
 - 🚀 Easy deployment to Vercel
@@ -51,9 +51,9 @@ SLACK_APP_TOKEN=xapp-your-app-token
 
 # Airtable Configuration
 AIRTABLE_API_TOKEN=your-airtable-token
-AIRTABLE_BASE_ID=app8JlYvQ0jwjT5dD
-AIRTABLE_TABLE_NAME=Bugs
-AIRTABLE_FIELD_NAME=Name
+AIRTABLE_BASE_ID=your-base-id-here
+AIRTABLE_TABLE_NAME=your-table-name
+AIRTABLE_FIELD_NAME=your-field-name
 
 # App Configuration
 ENVIRONMENT=development
@@ -114,7 +114,7 @@ Slacktable/
 1. **User tags a message** by reacting with `:fedex:` emoji
 2. **Slack sends event** to your app via webhook
 3. **App processes the reaction** and extracts the original message
-4. **Message is sent to Airtable** in the "Bugs" table under the "Name" field
+4. **Message is sent to Airtable** in your configured table and field
 5. **Success/error logged** for monitoring
 
 ## Setup Guides
