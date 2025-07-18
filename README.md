@@ -13,7 +13,8 @@ Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatical
 - 🗃️ Creates records in Airtable table
 - 🔒 Secure token management via environment variables
 - 📊 Comprehensive logging and error handling
-- 🚀 Easy deployment to Vercel
+- ⚡ Real-time Socket Mode connection to Slack
+- 🚀 Easy deployment to Fly.io
 
 ## Quick Start
 
@@ -34,14 +35,7 @@ Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatical
    # Edit .env with your tokens (see Configuration section)
    ```
 
-4. **Run locally**
-   
-   **Option A: HTTP Mode (for webhook deployment)**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-   
-   **Option B: Socket Mode (for local development)**
+4. **Run locally with Socket Mode**
    ```bash
    python run_socket_mode.py
    ```
@@ -53,7 +47,6 @@ Create a `.env` file with the following variables:
 ```env
 # Slack App Tokens
 SLACK_BOT_TOKEN=xoxb-your-bot-token
-SLACK_SIGNING_SECRET=your-signing-secret
 SLACK_APP_TOKEN=xapp-your-app-token
 
 # Airtable Configuration
@@ -63,28 +56,25 @@ AIRTABLE_TABLE_NAME=your-table-name
 AIRTABLE_FIELD_NAME=your-field-name
 
 # App Configuration
+TARGET_EMOJI=fedex
 ENVIRONMENT=development
 LOG_LEVEL=INFO
 ```
 
+**Note**: Socket Mode doesn't require `SLACK_SIGNING_SECRET` - only the Bot Token and App-Level Token are needed.
+
 ## Deployment
 
-### Vercel Deployment
+This app is designed to run on [Fly.io](https://fly.io) which supports persistent connections required for Socket Mode.
 
-1. **Install Vercel CLI**
-   ```bash
-   npm install -g vercel
-   ```
+For detailed deployment instructions, see [docs/deployment.md](docs/deployment.md).
 
-2. **Deploy**
-   ```bash
-   vercel --prod
-   ```
+### Quick Deploy
 
-3. **Set environment variables in Vercel**
-   - Go to your Vercel project dashboard
-   - Navigate to Settings → Environment Variables
-   - Add all variables from your `.env` file
+1. **Install Fly.io CLI** and authenticate
+2. **Initialize your app**: `flyctl launch`
+3. **Set secrets**: Use `flyctl secrets set` for all environment variables
+4. **Deploy**: `flyctl deploy`
 
 ## Project Structure
 
@@ -92,8 +82,8 @@ LOG_LEVEL=INFO
 Slacktable/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py              # FastAPI application entry point
-│   ├── socket_mode.py       # Socket Mode runner for local development
+│   ├── main.py              # FastAPI application (legacy)
+│   ├── socket_mode.py       # Socket Mode handler
 │   ├── config.py            # Configuration and environment variables
 │   ├── slack/
 │   │   ├── __init__.py
@@ -112,7 +102,6 @@ Slacktable/
 ├── tests/
 │   └── test_handlers.py     # Unit tests
 ├── requirements.txt         # Python dependencies
-├── vercel.json             # Vercel deployment configuration
 ├── run_socket_mode.py      # Socket Mode runner script
 ├── .env.example            # Environment variables template
 └── README.md               # This file
@@ -121,7 +110,7 @@ Slacktable/
 ## How It Works
 
 1. **User tags a message** by reacting with `:fedex:` emoji
-2. **Slack sends event** to your app via webhook
+2. **Slack sends event** to your app via Socket Mode connection
 3. **App processes the reaction** and extracts the original message
 4. **Message is sent to Airtable** in your configured table and field
 5. **Success/error logged** for monitoring
@@ -130,7 +119,7 @@ Slacktable/
 
 - [Slack App Setup](docs/slack-app-setup.md) - Step-by-step Slack app configuration
 - [Airtable Setup](docs/airtable-setup.md) - Airtable API token and base setup
-- [Deployment Guide](docs/deployment.md) - Vercel deployment instructions
+- [Deployment Guide](docs/deployment.md) - Fly.io deployment instructions
 
 ## Development
 
