@@ -35,8 +35,15 @@ Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatical
    ```
 
 4. **Run locally**
+   
+   **Option A: HTTP Mode (for webhook deployment)**
    ```bash
    uvicorn app.main:app --reload
+   ```
+   
+   **Option B: Socket Mode (for local development)**
+   ```bash
+   python run_socket_mode.py
    ```
 
 ## Configuration
@@ -86,6 +93,7 @@ Slacktable/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI application entry point
+│   ├── socket_mode.py       # Socket Mode runner for local development
 │   ├── config.py            # Configuration and environment variables
 │   ├── slack/
 │   │   ├── __init__.py
@@ -105,6 +113,7 @@ Slacktable/
 │   └── test_handlers.py     # Unit tests
 ├── requirements.txt         # Python dependencies
 ├── vercel.json             # Vercel deployment configuration
+├── run_socket_mode.py      # Socket Mode runner script
 ├── .env.example            # Environment variables template
 └── README.md               # This file
 ```
