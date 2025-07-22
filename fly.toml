@@ -1,0 +1,14 @@
+# fly.toml app configuration file generated for slacktable on 2025-07-22T15:12:23-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'slacktable'
+primary_region = 'sjc'
+
+[build]
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

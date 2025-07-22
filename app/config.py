@@ -7,11 +7,8 @@ import os
 from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-
-# Load environment variables from .env file (only in development)
-if os.getenv('ENVIRONMENT') != 'production':
-    load_dotenv()
+# Note: In production, environment variables are set directly by the platform
+# No .env file is used to avoid conflicts with placeholder values
 
 
 class Settings(BaseSettings):
@@ -19,8 +16,8 @@ class Settings(BaseSettings):
     
     # Slack Configuration
     slack_bot_token: str = Field(..., env="SLACK_BOT_TOKEN")
-    slack_signing_secret: str = Field(..., env="SLACK_SIGNING_SECRET")
-    slack_app_token: str = Field(default="", env="SLACK_APP_TOKEN")
+    slack_signing_secret: Optional[str] = Field(default=None, env="SLACK_SIGNING_SECRET")
+    slack_app_token: str = Field(..., env="SLACK_APP_TOKEN")
     
     # Airtable Configuration
     airtable_api_token: str = Field(..., env="AIRTABLE_API_TOKEN")
@@ -36,7 +33,6 @@ class Settings(BaseSettings):
     target_emoji: str = Field(default="fedex", env="TARGET_EMOJI")
     
     class Config:
-        env_file = ".env"
         case_sensitive = True
 
 
