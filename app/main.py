@@ -11,7 +11,7 @@ from typing import Dict, Any
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from app.config import settings
+from app.config import get_settings
 from app.utils.logging import logger
 from app.slack.handlers import handle_reaction_added, handle_reaction_removed
 
@@ -56,6 +56,7 @@ def verify_slack_signature(request_body: bytes, timestamp: str, signature: str) 
     sig_basestring = f"v0:{timestamp}:{request_body.decode('utf-8')}"
     
     # Create the expected signature
+    settings = get_settings()
     expected_signature = 'v0=' + hmac.new(
         settings.slack_signing_secret.encode('utf-8'),
         sig_basestring.encode('utf-8'),
@@ -160,6 +161,7 @@ async def slack_interactive(request: Request):
 if __name__ == "__main__":
     import uvicorn
     
+    settings = get_settings()
     logger.info("Starting Slacktable server", {
         "environment": settings.environment,
         "log_level": settings.log_level

@@ -6,7 +6,7 @@ Handles interaction with Airtable API to create records.
 from typing import Optional, Dict, Any
 from pyairtable import Table
 
-from app.config import settings
+from app.config import get_settings
 from app.utils.logging import logger
 
 
@@ -15,6 +15,7 @@ class AirtableClient:
     
     def __init__(self):
         """Initialize Airtable client with API token and configuration from settings."""
+        settings = get_settings()
         self.table = Table(settings.airtable_api_token, settings.airtable_base_id, settings.airtable_table_name)
     
     def create_record(self, fields: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -37,5 +38,19 @@ class AirtableClient:
             return None
 
 
-# Global Airtable client instance
-airtable_client = AirtableClient()
+# Lazy Airtable client instance
+_airtable_client = None
+
+def get_airtable_client():
+    """Get the global Airtable client instance (lazy-loaded)."""
+    global _airtable_client
+    if _airtable_client is None:
+        _airtable_client = AirtableClient()
+    return _airtable_client
+
+# For backward compatibility
+class AirtableClientProxy:
+    def __getattr__(self, name):
+        return getattr(get_airtable_client(), name)
+
+airtable_client = AirtableClientProxy()

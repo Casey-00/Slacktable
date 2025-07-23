@@ -15,31 +15,36 @@ class Settings(BaseSettings):
     """Application settings with validation."""
     
     # Slack Configuration
-    slack_bot_token: str = Field(..., env="SLACK_BOT_TOKEN")
-    slack_signing_secret: Optional[str] = Field(default=None, env="SLACK_SIGNING_SECRET")
-    slack_app_token: str = Field(..., env="SLACK_APP_TOKEN")
+    slack_bot_token: str
+    slack_signing_secret: Optional[str] = None
+    slack_app_token: str
     
     # Airtable Configuration
-    airtable_api_token: str = Field(..., env="AIRTABLE_API_TOKEN")
-    airtable_base_id: str = Field(..., env="AIRTABLE_BASE_ID")
-    airtable_table_name: str = Field(..., env="AIRTABLE_TABLE_NAME")
-    airtable_field_name: str = Field(..., env="AIRTABLE_FIELD_NAME")
+    airtable_api_token: str
+    airtable_base_id: str
+    airtable_table_name: str
+    airtable_field_name: str
     
     # App Configuration
-    environment: str = Field(default="development", env="ENVIRONMENT")
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    environment: str = "development"
+    log_level: str = "INFO"
     
     # Emoji configuration
-    target_emoji: str = Field(default="fedex", env="TARGET_EMOJI")
+    target_emoji: str = "fedex"
     
-    class Config:
-        case_sensitive = True
+    model_config = {"case_sensitive": True}
 
+
+_settings = None
 
 def get_settings() -> Settings:
-    """Get application settings instance."""
-    return Settings()
+    """Get application settings instance (singleton)."""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
 
 
-# Global settings instance
-settings = get_settings()
+# Lazy-loaded settings instance
+def get_settings_lazy():
+    return get_settings()

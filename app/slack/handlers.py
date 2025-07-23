@@ -6,7 +6,7 @@ Processes reaction events and triggers Airtable record creation.
 from typing import Dict, Any
 from datetime import datetime
 
-from app.config import settings
+from app.config import get_settings
 from app.utils.logging import logger
 from app.slack.client import slack_client
 from app.airtable.client import airtable_client
@@ -33,6 +33,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         logger.slack_event("reaction_added", user_id, channel_id, f"Reaction: {reaction}")
         
         # Check if this is the target emoji
+        settings = get_settings()
         if reaction != settings.target_emoji:
             logger.debug(f"Ignoring reaction: {reaction} (not target emoji: {settings.target_emoji})")
             return True
@@ -111,6 +112,7 @@ def create_airtable_record(message_text: str, context: Dict[str, Any]) -> bool:
     """
     try:
         # Prepare record fields
+        settings = get_settings()
         fields = {
             settings.airtable_field_name: message_text
         }

@@ -8,7 +8,7 @@ import sys
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from app.config import settings
+from app.config import get_settings
 
 
 class StructuredLogger:
@@ -21,6 +21,7 @@ class StructuredLogger:
     def _setup_logger(self):
         """Configure the logger with appropriate handlers and formatting."""
         # Set log level from settings
+        settings = get_settings()
         log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
         self.logger.setLevel(log_level)
         
@@ -96,5 +97,19 @@ class StructuredLogger:
             self.error(f"Airtable operation failed: {operation}", context)
 
 
-# Global logger instance
-logger = StructuredLogger()
+# Lazy logger instance
+_logger = None
+
+def get_logger():
+    """Get the global logger instance (lazy-loaded)."""
+    global _logger
+    if _logger is None:
+        _logger = StructuredLogger()
+    return _logger
+
+# For backward compatibility, expose logger as a property
+class LoggerProxy:
+    def __getattr__(self, name):
+        return getattr(get_logger(), name)
+
+logger = LoggerProxy()

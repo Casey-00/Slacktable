@@ -7,13 +7,14 @@ import asyncio
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 
-from app.config import settings
+from app.config import get_settings
 from app.utils.logging import logger
 from app.slack.handlers import handle_reaction_added, handle_reaction_removed
 
 
 def create_socket_mode_app() -> AsyncApp:
     """Create and configure the Socket Mode Slack app."""
+    settings = get_settings()
     app = AsyncApp(
         token=settings.slack_bot_token,
         signing_secret=settings.slack_signing_secret,
@@ -52,6 +53,7 @@ def create_socket_mode_app() -> AsyncApp:
 
 async def run_socket_mode():
     """Run the app in Socket Mode."""
+    settings = get_settings()
     if not settings.slack_app_token:
         logger.error("SLACK_APP_TOKEN is required for Socket Mode")
         return

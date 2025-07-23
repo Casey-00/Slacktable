@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from app.config import settings
+from app.config import get_settings
 from app.utils.logging import logger
 
 
@@ -16,6 +16,7 @@ class SlackClient:
     
     def __init__(self):
         """Initialize Slack client with bot token."""
+        settings = get_settings()
         self.client = WebClient(token=settings.slack_bot_token)
         self.bot_user_id = None
         self._get_bot_info()
@@ -137,5 +138,19 @@ class SlackClient:
             return None
 
 
-# Global Slack client instance
-slack_client = SlackClient()
+# Lazy Slack client instance
+_slack_client = None
+
+def get_slack_client():
+    """Get the global Slack client instance (lazy-loaded)."""
+    global _slack_client
+    if _slack_client is None:
+        _slack_client = SlackClient()
+    return _slack_client
+
+# For backward compatibility
+class SlackClientProxy:
+    def __getattr__(self, name):
+        return getattr(get_slack_client(), name)
+
+slack_client = SlackClientProxy()
