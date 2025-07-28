@@ -23,8 +23,11 @@ def create_socket_mode_app() -> AsyncApp:
     @app.event("reaction_added")
     async def reaction_added_handler(event, say):
         """Handle reaction_added events."""
-        logger.info(f"Received reaction_added event: {event}")
-        if event.get("reaction") == settings.target_emoji:
+        reaction = event.get("reaction")
+        logger.info(f"Received reaction: {reaction}")
+        
+        if reaction == settings.target_emoji:
+            logger.info(f"Processing {reaction} reaction")
             try:
                 success = handle_reaction_added(event)
                 if success:
@@ -51,12 +54,14 @@ def create_socket_mode_app() -> AsyncApp:
     return app
 
 
+
 async def run_socket_mode():
     """Run the app in Socket Mode."""
     settings = get_settings()
     if not settings.slack_app_token:
         logger.error("SLACK_APP_TOKEN is required for Socket Mode")
         return
+
 
     app = create_socket_mode_app()
     handler = AsyncSocketModeHandler(app, settings.slack_app_token)

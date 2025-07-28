@@ -72,7 +72,7 @@ Replace:
 
 ## Step 6: Set Environment Variables
 
-In your deployment environment (Vercel), set these environment variables:
+In your deployment environment (Fly.io) or local `.env` file, set these environment variables:
 
 ```env
 AIRTABLE_API_TOKEN=pat-your-personal-access-token
@@ -169,4 +169,4 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 
 ---
 
-**Next Steps**: After completing this setup, proceed to [Deployment Guide](deployment.md) to deploy your app to Vercel.
+**Next Steps**: After completing this setup, proceed to [Deployment Guide](deployment.md) to deploy your app to Fly.io.

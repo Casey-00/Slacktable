@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # Emoji configuration
     target_emoji: str = "fedex"
     
-    model_config = {"case_sensitive": True}
+    model_config = {"case_sensitive": False}
 
 
 _settings = None
