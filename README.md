@@ -57,8 +57,6 @@ AIRTABLE_FIELD_NAME=your-field-name
 
 # App Configuration
 TARGET_EMOJI=fedex
-ENVIRONMENT=development
-LOG_LEVEL=INFO
 ```
 
 **Note**: Socket Mode doesn't require `SLACK_SIGNING_SECRET` - only the Bot Token and App-Level Token are needed.
