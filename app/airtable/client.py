@@ -52,8 +52,8 @@ class AirtableClient:
         uploaded_attachments = []
         settings = get_settings()
         
-        # Airtable upload endpoint
-        upload_url = f"https://content.airtable.com/v0/{settings.airtable_base_id}/{settings.airtable_table_name}/uploadAttachment"
+        # Airtable upload endpoint - use the direct content API
+        upload_url = f"https://content.airtable.com/v0/{settings.airtable_base_id}/uploadAttachment"
         headers = {
             "Authorization": f"Bearer {settings.airtable_api_token}"
         }
