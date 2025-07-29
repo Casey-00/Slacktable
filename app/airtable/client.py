@@ -39,53 +39,31 @@ class AirtableClient:
             logger.airtable_operation("create_record", success=False, error=str(e))
             return None
     
-    def upload_attachments(self, image_attachments: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    def prepare_attachments(self, image_attachments: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         """
-        Upload image attachments to Airtable and return attachment objects.
+        Prepare image attachments for Airtable by converting to URL format.
         
         Args:
-            image_attachments: List of dictionaries containing 'filename' and 'content'
+            image_attachments: List of dictionaries containing 'filename' and 'url'
             
         Returns:
             List of Airtable attachment objects with 'url' and 'filename'
         """
-        uploaded_attachments = []
-        settings = get_settings()
-        
-        # Airtable upload endpoint - use the direct content API
-        upload_url = f"https://content.airtable.com/v0/{settings.airtable_base_id}/uploadAttachment"
-        headers = {
-            "Authorization": f"Bearer {settings.airtable_api_token}"
-        }
+        prepared_attachments = []
         
         for attachment in image_attachments:
             try:
-                filename = attachment['filename']
-                content = attachment['content']
-                
-                # Prepare multipart form data
-                files = {
-                    'file': (filename, io.BytesIO(content), 'image/*')
-                }
-                
-                # Upload to Airtable
-                response = requests.post(upload_url, headers=headers, files=files)
-                response.raise_for_status()
-                
-                upload_result = response.json()
-                
-                uploaded_attachments.append({
-                    'url': upload_result['url'],
-                    'filename': filename
+                prepared_attachments.append({
+                    'url': attachment['url'],
+                    'filename': attachment['filename']
                 })
-                
-                logger.info(f"Successfully uploaded {filename} to Airtable")
+                logger.info(f"Prepared attachment {attachment['filename']} for Airtable")
                 
             except Exception as e:
-                logger.error(f"Failed to upload {attachment.get('filename', 'unknown')}: {e}")
+                logger.error(f"Failed to prepare {attachment.get('filename', 'unknown')}: {e}")
                 continue
                 
-        return uploaded_attachments
+        return prepared_attachments
     
     def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]], attachment_field: str = "Screenshot") -> Optional[Dict[str, Any]]:
         """
@@ -100,12 +78,12 @@ class AirtableClient:
             The created record or None if failed
         """
         try:
-            # First upload the attachments
+            # First prepare the attachments
             if image_attachments:
-                uploaded_attachments = self.upload_attachments(image_attachments)
-                if uploaded_attachments:
-                    fields[attachment_field] = uploaded_attachments
-                    logger.info(f"Added {len(uploaded_attachments)} attachments to {attachment_field} field")
+                prepared_attachments = self.prepare_attachments(image_attachments)
+                if prepared_attachments:
+                    fields[attachment_field] = prepared_attachments
+                    logger.info(f"Added {len(prepared_attachments)} attachments to {attachment_field} field")
             
             # Then create the record with all fields including attachments
             return self.create_record(fields)

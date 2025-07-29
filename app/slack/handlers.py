@@ -108,17 +108,13 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
 
 def extract_image_attachments(message: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Extracts and prepares image attachments for Airtable.
-
-    Downloads the image from Slack's private URL into memory and prepares
-    it for uploading to Airtable.
+    Extracts image attachments from Slack message and prepares URLs for Airtable.
 
     Args:
         message: The Slack message object.
 
     Returns:
-        A list of dictionaries, where each contains the filename and content
-        of an image to be uploaded.
+        A list of dictionaries, where each contains the filename and authenticated URL.
     """
     attachments = []
     files = message.get("files", [])
@@ -127,26 +123,19 @@ def extract_image_attachments(message: Dict[str, Any]) -> List[Dict[str, Any]]:
     for file in files:
         mimetype = file.get("mimetype", "")
         if mimetype.startswith("image/"):
-            url = file.get("url_private")
+            url_private = file.get("url_private")
             filename = file.get("name", "screenshot.png")
-            logger.info(f"Found image attachment: {filename}", context={"url": url})
-
-            try:
-                # Download the image content using the bot token for auth
-                headers = {"Authorization": f"Bearer {settings.slack_bot_token}"}
-                response = requests.get(url, headers=headers, stream=True)
-                response.raise_for_status()  # Raise an exception for bad status codes
-
-                # We will pass the raw content to the Airtable client to upload
+            
+            if url_private:
+                # Create authenticated URL with bot token
+                auth_url = f"{url_private}?token={settings.slack_bot_token}"
+                
                 attachments.append({
                     "filename": filename,
-                    "content": response.content, 
+                    "url": auth_url
                 })
-                logger.info(f"Successfully downloaded {filename} from Slack.")
-
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Failed to download image from Slack: {e}", context={"filename": filename})
-                continue
+                
+                logger.info(f"Found image attachment: {filename}", context={"url": url_private})
 
     return attachments
 
