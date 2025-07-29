@@ -37,81 +37,90 @@ class SlackClient:
             })
             raise
     
-    def get_message_info(self, channel_id: str, message_ts: str, thread_ts: str = None) -> Optional[Dict[str, Any]]:
+    def get_message_info(self, channel_id: str, message_ts: str) -> Optional[Dict[str, Any]]:
         """
         Get message information from Slack.
+        Handles both regular messages and threaded messages automatically.
         
         Args:
             channel_id: The channel ID where the message is located
             message_ts: The timestamp of the message
-            thread_ts: The timestamp of the thread parent (if message is in a thread)
             
         Returns:
             Message information or None if not found
         """
         try:
-            # If thread_ts is provided, this is a threaded message
-            if thread_ts:
-                logger.debug("Retrieving threaded message", {
+            # First, try to get the message as a regular channel message
+            response = self.client.conversations_history(
+                channel=channel_id,
+                inclusive=True,
+                oldest=message_ts,
+                limit=1
+            )
+            
+            if response["messages"]:
+                message = response["messages"][0]
+                logger.debug("Retrieved message from channel", {
                     "channel_id": channel_id,
                     "message_ts": message_ts,
-                    "thread_ts": thread_ts
+                    "user_id": message.get("user"),
+                    "text_length": len(message.get("text", "")),
+                    "is_threaded_reply": message.get("thread_ts") is not None
                 })
-                
-                response = self.client.conversations_replies(
-                    channel=channel_id,
-                    ts=thread_ts,
-                    inclusive=True
-                )
-                
-                # Find the specific message in the thread
-                for message in response["messages"]:
-                    if message["ts"] == message_ts:
-                        logger.debug("Retrieved threaded message info", {
-                            "channel_id": channel_id,
-                            "message_ts": message_ts,
-                            "thread_ts": thread_ts,
-                            "user_id": message.get("user"),
-                            "text_length": len(message.get("text", ""))
-                        })
-                        return message
+                return message
+            
+            # If not found in main channel, search for it in threads
+            logger.debug("Message not in main channel, searching threads", {
+                "channel_id": channel_id,
+                "message_ts": message_ts
+            })
+            
+            # Get recent messages to find potential thread parents
+            recent_response = self.client.conversations_history(
+                channel=channel_id,
+                limit=100  # Check last 100 messages for thread parents
+            )
+            
+            for potential_parent in recent_response["messages"]:
+                # Check if this message has replies (could be a thread parent)
+                if potential_parent.get("reply_count", 0) > 0:
+                    try:
+                        # Get the thread replies
+                        thread_response = self.client.conversations_replies(
+                            channel=channel_id,
+                            ts=potential_parent["ts"],
+                            inclusive=True
+                        )
                         
-                logger.warning("Threaded message not found", {
-                    "channel_id": channel_id,
-                    "message_ts": message_ts,
-                    "thread_ts": thread_ts
-                })
-                return None
-            else:
-                # Regular channel message
-                response = self.client.conversations_history(
-                    channel=channel_id,
-                    inclusive=True,
-                    oldest=message_ts,
-                    limit=1
-                )
-                
-                if response["messages"]:
-                    message = response["messages"][0]
-                    logger.debug("Retrieved message info", {
-                        "channel_id": channel_id,
-                        "message_ts": message_ts,
-                        "user_id": message.get("user"),
-                        "text_length": len(message.get("text", ""))
-                    })
-                    return message
-                else:
-                    logger.warning("Message not found", {
-                        "channel_id": channel_id,
-                        "message_ts": message_ts
-                    })
-                    return None
+                        # Look for our target message in this thread
+                        for thread_message in thread_response["messages"]:
+                            if thread_message["ts"] == message_ts:
+                                logger.debug("Found message in thread", {
+                                    "channel_id": channel_id,
+                                    "message_ts": message_ts,
+                                    "thread_parent_ts": potential_parent["ts"],
+                                    "user_id": thread_message.get("user"),
+                                    "text_length": len(thread_message.get("text", ""))
+                                })
+                                return thread_message
+                                
+                    except SlackApiError as thread_error:
+                        logger.debug("Error checking thread", {
+                            "thread_parent_ts": potential_parent["ts"],
+                            "error": str(thread_error)
+                        })
+                        continue
+            
+            logger.warning("Message not found in channel or threads", {
+                "channel_id": channel_id,
+                "message_ts": message_ts
+            })
+            return None
                 
         except SlackApiError as e:
             logger.error("Failed to get message info", {
                 "channel_id": channel_id,
                 "message_ts": message_ts,
-                "thread_ts": thread_ts,
                 "error": str(e),
                 "error_code": e.response["error"]
             })

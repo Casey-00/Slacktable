@@ -50,8 +50,8 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             })
             return False
         
-        # Get the original message (supporting both regular and threaded messages)
-        message = slack_client.get_message_info(channel_id, message_ts, thread_ts)
+        # Get the original message (supports both regular and threaded messages automatically)
+        message = slack_client.get_message_info(channel_id, message_ts)
         if not message:
             logger.error("Could not retrieve message", {
                 "channel_id": channel_id,
