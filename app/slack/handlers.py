@@ -31,8 +31,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         message_ts = item.get("ts")
         thread_ts = item.get("thread_ts")  # Present if message is in a thread
         
-        # Log the reaction event with full event data for debugging
-        logger.info(f"🔍 FULL REACTION EVENT: {event}")
+        # Log the reaction event
         logger.slack_event("reaction_added", user_id, channel_id, f"Reaction: {reaction}")
         
         # Check if this is the target emoji

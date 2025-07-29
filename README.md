@@ -9,6 +9,7 @@ Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatical
 ## Features
 
 - 🚚 React with `:fedex:` emoji to tag messages
+- 🧵 Works on both main messages and threaded replies
 - 📝 Automatically extracts message text
 - 🗃️ Creates records in Airtable table
 - 🔒 Secure token management via environment variables
