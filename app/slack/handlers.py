@@ -26,8 +26,10 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         # Extract event data
         reaction = event.get("reaction")
         user_id = event.get("user")
-        channel_id = event.get("item", {}).get("channel")
-        message_ts = event.get("item", {}).get("ts")
+        item = event.get("item", {})
+        channel_id = item.get("channel")
+        message_ts = item.get("ts")
+        thread_ts = item.get("thread_ts")  # Present if message is in a thread
         
         # Log the reaction event
         logger.slack_event("reaction_added", user_id, channel_id, f"Reaction: {reaction}")
@@ -47,12 +49,14 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             })
             return False
         
-        # Get the original message
-        message = slack_client.get_message_info(channel_id, message_ts)
+        # Get the original message (supporting both regular and threaded messages)
+        message = slack_client.get_message_info(channel_id, message_ts, thread_ts)
         if not message:
             logger.error("Could not retrieve message", {
                 "channel_id": channel_id,
-                "message_ts": message_ts
+                "message_ts": message_ts,
+                "thread_ts": thread_ts,
+                "is_threaded": thread_ts is not None
             })
             return False
         
@@ -76,6 +80,8 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             "message_author": message_user_id,
             "channel_name": channel_info.get("name") if channel_info else channel_id,
             "message_length": len(message_text),
+            "is_threaded": thread_ts is not None,
+            "thread_ts": thread_ts,
             "timestamp": datetime.utcnow().isoformat()
         }
         

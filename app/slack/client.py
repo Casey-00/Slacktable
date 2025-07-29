@@ -37,45 +37,81 @@ class SlackClient:
             })
             raise
     
-    def get_message_info(self, channel_id: str, message_ts: str) -> Optional[Dict[str, Any]]:
+    def get_message_info(self, channel_id: str, message_ts: str, thread_ts: str = None) -> Optional[Dict[str, Any]]:
         """
         Get message information from Slack.
         
         Args:
             channel_id: The channel ID where the message is located
             message_ts: The timestamp of the message
+            thread_ts: The timestamp of the thread parent (if message is in a thread)
             
         Returns:
             Message information or None if not found
         """
         try:
-            response = self.client.conversations_history(
-                channel=channel_id,
-                inclusive=True,
-                oldest=message_ts,
-                limit=1
-            )
-            
-            if response["messages"]:
-                message = response["messages"][0]
-                logger.debug("Retrieved message info", {
+            # If thread_ts is provided, this is a threaded message
+            if thread_ts:
+                logger.debug("Retrieving threaded message", {
                     "channel_id": channel_id,
                     "message_ts": message_ts,
-                    "user_id": message.get("user"),
-                    "text_length": len(message.get("text", ""))
+                    "thread_ts": thread_ts
                 })
-                return message
-            else:
-                logger.warning("Message not found", {
+                
+                response = self.client.conversations_replies(
+                    channel=channel_id,
+                    ts=thread_ts,
+                    inclusive=True
+                )
+                
+                # Find the specific message in the thread
+                for message in response["messages"]:
+                    if message["ts"] == message_ts:
+                        logger.debug("Retrieved threaded message info", {
+                            "channel_id": channel_id,
+                            "message_ts": message_ts,
+                            "thread_ts": thread_ts,
+                            "user_id": message.get("user"),
+                            "text_length": len(message.get("text", ""))
+                        })
+                        return message
+                        
+                logger.warning("Threaded message not found", {
                     "channel_id": channel_id,
-                    "message_ts": message_ts
+                    "message_ts": message_ts,
+                    "thread_ts": thread_ts
                 })
                 return None
+            else:
+                # Regular channel message
+                response = self.client.conversations_history(
+                    channel=channel_id,
+                    inclusive=True,
+                    oldest=message_ts,
+                    limit=1
+                )
+                
+                if response["messages"]:
+                    message = response["messages"][0]
+                    logger.debug("Retrieved message info", {
+                        "channel_id": channel_id,
+                        "message_ts": message_ts,
+                        "user_id": message.get("user"),
+                        "text_length": len(message.get("text", ""))
+                    })
+                    return message
+                else:
+                    logger.warning("Message not found", {
+                        "channel_id": channel_id,
+                        "message_ts": message_ts
+                    })
+                    return None
                 
         except SlackApiError as e:
             logger.error("Failed to get message info", {
                 "channel_id": channel_id,
                 "message_ts": message_ts,
+                "thread_ts": thread_ts,
                 "error": str(e),
                 "error_code": e.response["error"]
             })

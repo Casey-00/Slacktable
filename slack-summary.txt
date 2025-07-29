@@ -1,0 +1,8 @@
+🚚 **Slacktable** - React with :fedex: emoji to automatically send messages to Airtable
+
+📝 **What it does**: Monitors Slack channels and creates Airtable records when users react with the :fedex: emoji. Perfect for collecting bug reports, feature requests, or important messages.
+
+🛠️ **Tech**: Python app using Slack's Socket Mode + Airtable API
+🚀 **Deploy**: Live on Fly.io
+
+📂 **Repo**: https://github.com/Casey-00/Slacktable
