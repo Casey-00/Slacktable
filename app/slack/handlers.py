@@ -3,7 +3,7 @@ Slack event handlers for emoji reactions.
 Processes reaction events and triggers Airtable record creation.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from datetime import datetime
 
 from app.config import get_settings
@@ -88,7 +88,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         logger.info("Processing fedex reaction", context)
         
         # Create Airtable record
-        success = create_airtable_record(message_text, context)
+        success = create_airtable_record(message_text, message, context)
         
         if success:
             logger.info("Successfully processed fedex reaction", context)
@@ -105,12 +105,46 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         return False
 
 
-def create_airtable_record(message_text: str, context: Dict[str, Any]) -> bool:
+def extract_image_attachments(message: Dict[str, Any]) -> List[Dict[str, str]]:
     """
-    Create a record in Airtable with the message text.
+    Extract image attachments from Slack message.
+    
+    Args:
+        message: The Slack message object
+        
+    Returns:
+        List of attachment objects for Airtable
+    """
+    attachments = []
+    files = message.get("files", [])
+    
+    for file in files:
+        # Check if it's an image
+        mimetype = file.get("mimetype", "")
+        if mimetype.startswith("image/"):
+            settings = get_settings()
+            # Create URL with bot token for authentication
+            auth_url = f"{file.get('url_private')}?token={settings.slack_bot_token}"
+            attachments.append({
+                "url": auth_url,
+                "filename": file.get("name", "screenshot")
+            })
+            logger.info("Found image attachment", {
+                "filename": file.get("name"),
+                "mimetype": mimetype,
+                "size": file.get("size")
+            })
+    
+    return attachments
+
+
+def create_airtable_record(message_text: str, message: Dict[str, Any], context: Dict[str, Any]) -> bool:
+    """
+    Create a record in Airtable with the message text and any image attachments.
     
     Args:
         message_text: The text content of the message
+        message: The full Slack message object
         context: Additional context for logging
         
     Returns:
@@ -123,6 +157,11 @@ def create_airtable_record(message_text: str, context: Dict[str, Any]) -> bool:
             settings.airtable_field_name: message_text,
             "Status": "Intake"
         }
+
+        # Add image attachments if any are present
+        image_attachments = extract_image_attachments(message)
+        if image_attachments:
+            fields["Screenshot"] = image_attachments
         
         # Create the record
         record = airtable_client.create_record(fields)
