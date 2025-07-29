@@ -3,6 +3,7 @@ Slack event handlers for emoji reactions.
 Processes reaction events and triggers Airtable record creation.
 """
 
+import requests
 from typing import Dict, Any, List
 from datetime import datetime
 
@@ -105,36 +106,48 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         return False
 
 
-def extract_image_attachments(message: Dict[str, Any]) -> List[Dict[str, str]]:
+def extract_image_attachments(message: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Extract image attachments from Slack message.
-    
+    Extracts and prepares image attachments for Airtable.
+
+    Downloads the image from Slack's private URL into memory and prepares
+    it for uploading to Airtable.
+
     Args:
-        message: The Slack message object
-        
+        message: The Slack message object.
+
     Returns:
-        List of attachment objects for Airtable
+        A list of dictionaries, where each contains the filename and content
+        of an image to be uploaded.
     """
     attachments = []
     files = message.get("files", [])
-    
+    settings = get_settings()
+
     for file in files:
-        # Check if it's an image
         mimetype = file.get("mimetype", "")
         if mimetype.startswith("image/"):
-            settings = get_settings()
-            # Create URL with bot token for authentication
-            auth_url = f"{file.get('url_private')}?token={settings.slack_bot_token}"
-            attachments.append({
-                "url": auth_url,
-                "filename": file.get("name", "screenshot")
-            })
-            logger.info("Found image attachment", {
-                "filename": file.get("name"),
-                "mimetype": mimetype,
-                "size": file.get("size")
-            })
-    
+            url = file.get("url_private")
+            filename = file.get("name", "screenshot.png")
+            logger.info(f"Found image attachment: {filename}", context={"url": url})
+
+            try:
+                # Download the image content using the bot token for auth
+                headers = {"Authorization": f"Bearer {settings.slack_bot_token}"}
+                response = requests.get(url, headers=headers, stream=True)
+                response.raise_for_status()  # Raise an exception for bad status codes
+
+                # We will pass the raw content to the Airtable client to upload
+                attachments.append({
+                    "filename": filename,
+                    "content": response.content, 
+                })
+                logger.info(f"Successfully downloaded {filename} from Slack.")
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Failed to download image from Slack: {e}", context={"filename": filename})
+                continue
+
     return attachments
 
 
@@ -160,11 +173,14 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
 
         # Add image attachments if any are present
         image_attachments = extract_image_attachments(message)
-        if image_attachments:
-            fields["Screenshot"] = image_attachments
         
-        # Create the record
-        record = airtable_client.create_record(fields)
+        # Create the record with or without attachments
+        if image_attachments:
+            logger.info(f"Creating record with {len(image_attachments)} image attachments")
+            record = airtable_client.create_record_with_attachments(fields, image_attachments)
+        else:
+            logger.info("Creating record without attachments")
+            record = airtable_client.create_record(fields)
         
         if record:
             logger.info("Airtable record created successfully", {
