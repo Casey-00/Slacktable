@@ -65,7 +65,7 @@ class AirtableClient:
                 
         return prepared_attachments
     
-    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]], attachment_field: str = "Screenshot") -> Optional[Dict[str, Any]]:
+    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]], attachment_field: str = "Slack Screenshot") -> Optional[Dict[str, Any]]:
         """
         Create a record with image attachments.
         
@@ -82,8 +82,9 @@ class AirtableClient:
             if image_attachments:
                 prepared_attachments = self.prepare_attachments(image_attachments)
                 if prepared_attachments:
-                    fields[attachment_field] = prepared_attachments
-                    logger.info(f"Added {len(prepared_attachments)} attachments to {attachment_field} field")
+                    # For URL field, just use the first image URL (most common case)
+                    fields[attachment_field] = prepared_attachments[0]['url']
+                    logger.info(f"Added image URL to {attachment_field} field: {prepared_attachments[0]['filename']}")
             
             # Then create the record with all fields including attachments
             return self.create_record(fields)
