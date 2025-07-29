@@ -120,7 +120,8 @@ def create_airtable_record(message_text: str, context: Dict[str, Any]) -> bool:
         # Prepare record fields
         settings = get_settings()
         fields = {
-            settings.airtable_field_name: message_text
+            settings.airtable_field_name: message_text,
+            "Status": "Intake"
         }
         
         # Create the record
