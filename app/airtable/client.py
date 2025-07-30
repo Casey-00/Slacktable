@@ -65,14 +65,13 @@ class AirtableClient:
                 
         return prepared_attachments
     
-    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]], attachment_field: str = "Slack Screenshot") -> Optional[Dict[str, Any]]:
+    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """
-        Create a record with image attachments.
+        Create a record with image attachments in multiple URL fields.
         
         Args:
             fields: Base fields for the record
-            image_attachments: List of image data to upload  
-            attachment_field: Name of the attachment field in Airtable
+            image_attachments: List of image data (up to 3 images supported)
             
         Returns:
             The created record or None if failed
@@ -82,9 +81,17 @@ class AirtableClient:
             if image_attachments:
                 prepared_attachments = self.prepare_attachments(image_attachments)
                 if prepared_attachments:
-                    # For URL field, just use the first image URL (most common case)
-                    fields[attachment_field] = prepared_attachments[0]['url']
-                    logger.info(f"Added image URL to {attachment_field} field: {prepared_attachments[0]['filename']}")
+                    # Map images to the three screenshot fields
+                    screenshot_fields = ["Slack Screenshot", "Slack Screenshot 2", "Slack Screenshot 3"]
+                    
+                    for i, attachment in enumerate(prepared_attachments[:3]):  # Limit to 3 images
+                        field_name = screenshot_fields[i]
+                        fields[field_name] = attachment['url']
+                        logger.info(f"Added image URL to {field_name} field: {attachment['filename']}")
+                    
+                    # Log if there were more than 3 images
+                    if len(prepared_attachments) > 3:
+                        logger.info(f"Message had {len(prepared_attachments)} images, only using first 3")
             
             # Then create the record with all fields including attachments
             return self.create_record(fields)
