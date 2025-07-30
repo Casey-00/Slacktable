@@ -12,6 +12,15 @@ from app.utils.logging import logger
 from app.slack.client import slack_client
 from app.airtable.client import airtable_client
 
+# Map emojis to their corresponding Pain Score values in Airtable.
+# The original :fedex: emoji is kept for backward compatibility and does not set a score.
+EMOJI_PAIN_SCORE_MAP = {
+    "one": "sm",
+    "two": "md",
+    "three": "lg",
+    "fedex": None,  # or you could map this to a default pain score like "sm"
+}
+
 
 def handle_reaction_added(event: Dict[str, Any]) -> bool:
     """
@@ -26,6 +35,15 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
     try:
         # Extract event data
         reaction = event.get("reaction")
+
+        # Check if the reaction is one of our target emojis. If not, ignore it.
+        if reaction not in EMOJI_PAIN_SCORE_MAP:
+            logger.debug(f"Ignoring non-target emoji: {reaction}")
+            return True  # Acknowledge the event, but do nothing
+
+        # Get the corresponding pain score for the emoji
+        pain_score = EMOJI_PAIN_SCORE_MAP.get(reaction)
+
         user_id = event.get("user")
         item = event.get("item", {})
         channel_id = item.get("channel")
@@ -34,13 +52,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         
         # Log the reaction event
         logger.slack_event("reaction_added", user_id, channel_id, f"Reaction: {reaction}")
-        
-        # Check if this is the target emoji
-        settings = get_settings()
-        if reaction != settings.target_emoji:
-            logger.debug(f"Ignoring reaction: {reaction} (not target emoji: {settings.target_emoji})")
-            return True
-        
+
         # Validate required fields
         if not all([user_id, channel_id, message_ts]):
             logger.error("Missing required fields in reaction event", {
@@ -83,19 +95,20 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             "message_length": len(message_text),
             "is_threaded": thread_ts is not None,
             "thread_ts": thread_ts,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "pain_score": pain_score,  # Add pain score to context
         }
         
-        logger.info("Processing fedex reaction", context)
+        logger.info(f"Processing {reaction} reaction", context)
         
         # Create Airtable record
         success = create_airtable_record(message_text, message, context)
         
         if success:
-            logger.info("Successfully processed fedex reaction", context)
+            logger.info(f"Successfully processed {reaction} reaction", context)
             return True
         else:
-            logger.error("Failed to process fedex reaction", context)
+            logger.error(f"Failed to process {reaction} reaction", context)
             return False
             
     except Exception as e:
@@ -157,8 +170,13 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         settings = get_settings()
         fields = {
             settings.airtable_field_name: message_text,
-            "Status": "Intake"
+            "Status": "Intake",
         }
+
+        # Add pain score to the record if it exists
+        pain_score = context.get("pain_score")
+        if pain_score:
+            fields["Pain Score"] = pain_score
 
         # Add image attachments if any are present
         image_attachments = extract_image_attachments(message)

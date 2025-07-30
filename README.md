@@ -1,17 +1,23 @@
 # Slacktable
 
-A Python-based Slack app that automatically sends tagged messages to Airtable when users react with a 🚚 (`:fedex:`) emoji.
+A Python-based Slack app that automatically sends tagged messages to Airtable when users react with specific emojis, including pain score classification.
 
 ## Overview
 
-Slacktable monitors Slack channels for `:fedex:` emoji reactions and automatically creates records in your Airtable table with the message content. Perfect for quickly collecting bug reports, feature requests, or any important messages from your team conversations.
+Slacktable monitors Slack channels for specific emoji reactions and automatically creates records in your Airtable table with the message content and metadata. Perfect for quickly collecting bug reports, feature requests, or any important messages from your team conversations with built-in priority classification.
 
 ## Features
 
-- 🚚 React with `:fedex:` emoji to tag messages
+- 🚚 React with `:fedex:` emoji to tag messages (legacy support)
+- 🔢 Use `:one:`, `:two:`, `:three:` emojis to tag messages with Pain Score classification
+- 📊 **Pain Score Support**: Automatically categorizes issues by severity
+  - `:one:` → Small (sm) pain score
+  - `:two:` → Medium (md) pain score  
+  - `:three:` → Large (lg) pain score
+- 🖼️ **Image Support**: Automatically captures up to 3 images per message
 - 🧵 Works on both main messages and threaded replies
 - 📝 Automatically extracts message text
-- 🗃️ Creates records in Airtable table
+- 🗃️ Creates records in Airtable table with Status = "Intake"
 - 🔒 Secure token management via environment variables
 - 📊 Comprehensive logging and error handling
 - ⚡ Real-time Socket Mode connection to Slack
@@ -57,7 +63,7 @@ AIRTABLE_TABLE_NAME=your-table-name
 AIRTABLE_FIELD_NAME=your-field-name
 
 # App Configuration
-TARGET_EMOJI=fedex
+# (No app-specific configuration is needed anymore as emoji mapping is in the code)
 ```
 
 **Note**: Socket Mode doesn't require `SLACK_SIGNING_SECRET` - only the Bot Token and App-Level Token are needed.
@@ -108,11 +114,20 @@ Slacktable/
 
 ## How It Works
 
-1. **User tags a message** by reacting with `:fedex:` emoji
+1. **User tags a message** by reacting with one of the supported emojis:
+   - `:fedex:` - Creates record without pain score (legacy)
+   - `:one:` - Creates record with Pain Score = "sm" (small)
+   - `:two:` - Creates record with Pain Score = "md" (medium)
+   - `:three:` - Creates record with Pain Score = "lg" (large)
 2. **Slack sends event** to your app via Socket Mode connection
 3. **App processes the reaction** and extracts the original message
-4. **Message is sent to Airtable** in your configured table and field
-5. **Success/error logged** for monitoring
+4. **Images are captured** automatically (up to 3 per message)
+5. **Record created in Airtable** with:
+   - Message text in your configured field
+   - Status = "Intake"
+   - Pain Score (if applicable)
+   - Image URLs in "Slack Screenshot", "Slack Screenshot 2", "Slack Screenshot 3" fields
+6. **Success/error logged** for monitoring
 
 ## Setup Guides
 
