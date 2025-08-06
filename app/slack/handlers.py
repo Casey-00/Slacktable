@@ -21,6 +21,42 @@ EMOJI_PAIN_SCORE_MAP = {
     "fedex": None,  # or you could map this to a default pain score like "sm"
 }
 
+# Map emojis to their Airtable destinations (base, table, field) and pain scores
+EMOJI_DESTINATION_MAP = {
+    # Pain Points emojis (original base)
+    "one": {
+        "base_id_key": "airtable_base_id",
+        "table_name_key": "airtable_table_name",
+        "field_name_key": "airtable_field_name",
+        "pain_score": "sm"
+    },
+    "two": {
+        "base_id_key": "airtable_base_id",
+        "table_name_key": "airtable_table_name", 
+        "field_name_key": "airtable_field_name",
+        "pain_score": "md"
+    },
+    "three": {
+        "base_id_key": "airtable_base_id",
+        "table_name_key": "airtable_table_name",
+        "field_name_key": "airtable_field_name", 
+        "pain_score": "lg"
+    },
+    "fedex": {
+        "base_id_key": "airtable_base_id",
+        "table_name_key": "airtable_table_name",
+        "field_name_key": "airtable_field_name",
+        "pain_score": None
+    },
+    # Changelog emoji (separate base)
+    "changelog": {
+        "base_id_key": "changelog_airtable_base_id",
+        "table_name_key": "changelog_airtable_table_name",
+        "field_name_key": "changelog_airtable_field_name",
+        "pain_score": None
+    }
+}
+
 
 def handle_reaction_added(event: Dict[str, Any]) -> bool:
     """
@@ -37,12 +73,13 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         reaction = event.get("reaction")
 
         # Check if the reaction is one of our target emojis. If not, ignore it.
-        if reaction not in EMOJI_PAIN_SCORE_MAP:
+        if reaction not in EMOJI_DESTINATION_MAP:
             logger.debug(f"Ignoring non-target emoji: {reaction}")
             return True  # Acknowledge the event, but do nothing
 
-        # Get the corresponding pain score for the emoji
-        pain_score = EMOJI_PAIN_SCORE_MAP.get(reaction)
+        # Get the destination configuration and pain score for the emoji
+        emoji_config = EMOJI_DESTINATION_MAP.get(reaction)
+        pain_score = emoji_config.get("pain_score") if emoji_config else None
 
         user_id = event.get("user")
         item = event.get("item", {})
@@ -97,6 +134,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             "thread_ts": thread_ts,
             "timestamp": datetime.utcnow().isoformat(),
             "pain_score": pain_score,  # Add pain score to context
+            "emoji_config": emoji_config,  # Add emoji configuration to context
         }
         
         logger.info(f"Processing {reaction} reaction", context)
@@ -166,10 +204,23 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         True if record created successfully, False otherwise
     """
     try:
-        # Prepare record fields
+        # Get emoji configuration and settings
+        emoji_config = context.get("emoji_config")
         settings = get_settings()
+        
+        # Get the correct base, table, and field for this emoji
+        base_id_key = emoji_config.get("base_id_key")
+        table_name_key = emoji_config.get("table_name_key")
+        field_name_key = emoji_config.get("field_name_key")
+        
+        # Get the actual values from settings using the keys
+        base_id = getattr(settings, base_id_key)
+        table_name = getattr(settings, table_name_key)
+        field_name = getattr(settings, field_name_key)
+        
+        # Prepare record fields
         fields = {
-            settings.airtable_field_name: message_text,
+            field_name: message_text,
             "Status": "Intake",
         }
 
@@ -184,10 +235,10 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         # Create the record with or without attachments
         if image_attachments:
             logger.info(f"Creating record with {len(image_attachments)} image attachments")
-            record = airtable_client.create_record_with_attachments(fields, image_attachments)
+            record = airtable_client.create_record_with_attachments(fields, image_attachments, base_id, table_name)
         else:
             logger.info("Creating record without attachments")
-            record = airtable_client.create_record(fields)
+            record = airtable_client.create_record(fields, base_id, table_name)
         
         if record:
             logger.info("Airtable record created successfully", {

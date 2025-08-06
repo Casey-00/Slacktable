@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     airtable_table_name: str
     airtable_field_name: str
     
+    # Changelog Airtable Configuration
+    changelog_airtable_base_id: str
+    changelog_airtable_table_name: str
+    changelog_airtable_field_name: str
+    
     # App Configuration
     environment: str = "development"
     log_level: str = "INFO"

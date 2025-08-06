@@ -16,22 +16,32 @@ class AirtableClient:
     """Airtable client to handle record creation/management."""
     
     def __init__(self):
-        """Initialize Airtable client with API token and configuration from settings."""
+        """Initialize Airtable client with API token from settings."""
         settings = get_settings()
-        self.table = Table(settings.airtable_api_token, settings.airtable_base_id, settings.airtable_table_name)
+        self.api_token = settings.airtable_api_token
+        # Keep the default table for backward compatibility
+        self.default_table = Table(settings.airtable_api_token, settings.airtable_base_id, settings.airtable_table_name)
     
-    def create_record(self, fields: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def create_record(self, fields: Dict[str, Any], base_id: str = None, table_name: str = None) -> Optional[Dict[str, Any]]:
         """
         Create a new record in the Airtable with specified fields.
         
         Args:
             fields: A dictionary representing the fields of the record to create.
+            base_id: Optional specific base ID to use (uses default if not provided)
+            table_name: Optional specific table name to use (uses default if not provided)
             
         Returns:
             The created record or None if an error occurred.
         """
         try:
-            record = self.table.create(fields)
+            # Use specific base/table if provided, otherwise use default
+            if base_id and table_name:
+                table = Table(self.api_token, base_id, table_name)
+            else:
+                table = self.default_table
+                
+            record = table.create(fields)
             logger.airtable_operation("create_record", success=True, record_id=record["id"])
             return record
             
@@ -65,13 +75,15 @@ class AirtableClient:
                 
         return prepared_attachments
     
-    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def create_record_with_attachments(self, fields: Dict[str, Any], image_attachments: List[Dict[str, Any]], base_id: str = None, table_name: str = None) -> Optional[Dict[str, Any]]:
         """
         Create a record with image attachments in multiple URL fields.
         
         Args:
             fields: Base fields for the record
             image_attachments: List of image data (up to 3 images supported)
+            base_id: Optional specific base ID to use (uses default if not provided)
+            table_name: Optional specific table name to use (uses default if not provided)
             
         Returns:
             The created record or None if failed
@@ -94,7 +106,7 @@ class AirtableClient:
                         logger.info(f"Message had {len(prepared_attachments)} images, only using first 3")
             
             # Then create the record with all fields including attachments
-            return self.create_record(fields)
+            return self.create_record(fields, base_id, table_name)
             
         except Exception as e:
             logger.error(f"Failed to create record with attachments: {e}")

@@ -9,7 +9,7 @@ from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 
 from app.config import get_settings
 from app.utils.logging import logger
-from app.slack.handlers import handle_reaction_added, handle_reaction_removed, EMOJI_PAIN_SCORE_MAP
+from app.slack.handlers import handle_reaction_added, handle_reaction_removed, EMOJI_DESTINATION_MAP
 
 
 def create_socket_mode_app() -> AsyncApp:
@@ -26,7 +26,7 @@ def create_socket_mode_app() -> AsyncApp:
         reaction = event.get("reaction")
         logger.info(f"Received reaction: {reaction}")
         
-        if reaction in EMOJI_PAIN_SCORE_MAP:
+        if reaction in EMOJI_DESTINATION_MAP:
             logger.info(f"Processing {reaction} reaction")
             try:
                 success = handle_reaction_added(event)
@@ -41,7 +41,7 @@ def create_socket_mode_app() -> AsyncApp:
     async def reaction_removed_handler(event, say):
         """Handle reaction_removed events."""
         logger.info(f"Received reaction_removed event: {event}")
-        if event.get("reaction") in EMOJI_PAIN_SCORE_MAP:
+        if event.get("reaction") in EMOJI_DESTINATION_MAP:
             try:
                 success = handle_reaction_removed(event)
                 if success:

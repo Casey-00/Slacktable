@@ -1,6 +1,6 @@
 # Slacktable
 
-A Python-based Slack app that automatically sends tagged messages to Airtable when users react with specific emojis, including pain score classification.
+A Python-based Slack app that automatically sends tagged messages to multiple Airtable bases when users react with specific emojis, with intelligent routing and pain score classification.
 
 ## Overview
 
@@ -10,10 +10,12 @@ Slacktable monitors Slack channels for specific emoji reactions and automaticall
 
 - 🚚 React with `:fedex:` emoji to tag messages (legacy support)
 - 🔢 Use `:one:`, `:two:`, `:three:` emojis to tag messages with Pain Score classification
+- 🪵 React with `:changelog:` emoji to route messages to separate Changelog table
 - 📊 **Pain Score Support**: Automatically categorizes issues by severity
   - `:one:` → Small (sm) pain score
   - `:two:` → Medium (md) pain score  
   - `:three:` → Large (lg) pain score
+- 🗂️ **Multi-Base Routing**: Different emojis can route to different Airtable bases
 - 🖼️ **Image Support**: Automatically captures up to 3 images per message
 - 🧵 Works on both main messages and threaded replies
 - 📝 Automatically extracts message text
@@ -119,6 +121,7 @@ Slacktable/
    - `:one:` - Creates record with Pain Score = "sm" (small)
    - `:two:` - Creates record with Pain Score = "md" (medium)
    - `:three:` - Creates record with Pain Score = "lg" (large)
+   - `:changelog:` - Routes to separate Changelog base without pain score
 2. **Slack sends event** to your app via Socket Mode connection
 3. **App processes the reaction** and extracts the original message
 4. **Images are captured** automatically (up to 3 per message)
