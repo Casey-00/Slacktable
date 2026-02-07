@@ -42,7 +42,7 @@ EMOJI_DESTINATION_MAP = {
         "field_name_key": "airtable_field_name", 
         "pain_score": "lg"
     },
-    "papercuts-in-progress": {
+    "papercut-immediate-in-progress": {
         "base_id_key": "airtable_base_id",
         "table_name_key": "airtable_table_name",
         "field_name_key": "airtable_field_name", 
