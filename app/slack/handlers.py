@@ -42,6 +42,13 @@ EMOJI_DESTINATION_MAP = {
         "field_name_key": "airtable_field_name", 
         "pain_score": "lg"
     },
+    "papercuts-in-progress": {
+        "base_id_key": "airtable_base_id",
+        "table_name_key": "airtable_table_name",
+        "field_name_key": "airtable_field_name", 
+        "pain_score": "lg",
+        "status": "In Progress"
+    },
     "fedex": {
         "base_id_key": "airtable_base_id",
         "table_name_key": "airtable_table_name",
@@ -218,10 +225,11 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         table_name = getattr(settings, table_name_key)
         field_name = getattr(settings, field_name_key)
         
-        # Prepare record fields
+        # Prepare record fields - use status from emoji config or default to "Intake"
+        status = emoji_config.get("status", "Intake")
         fields = {
             field_name: message_text,
-            "Status": "Intake",
+            "Status": status,
         }
 
         # Add pain score to the record if it exists
