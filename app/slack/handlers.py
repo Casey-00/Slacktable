@@ -15,28 +15,28 @@ from app.airtable.client import airtable_client
 # Map emojis to their corresponding Pain Score values in Airtable.
 # The original :fedex: emoji is kept for backward compatibility and does not set a score.
 EMOJI_PAIN_SCORE_MAP = {
-    "one": "sm",
-    "two": "md",
-    "three": "lg",
+    "papercut-small": "sm",
+    "papercut-md": "md",
+    "papercut-big": "lg",
     "fedex": None,  # or you could map this to a default pain score like "sm"
 }
 
 # Map emojis to their Airtable destinations (base, table, field) and pain scores
 EMOJI_DESTINATION_MAP = {
     # Pain Points emojis (original base)
-    "one": {
+    "papercut-small": {
         "base_id_key": "airtable_base_id",
         "table_name_key": "airtable_table_name",
         "field_name_key": "airtable_field_name",
         "pain_score": "sm"
     },
-    "two": {
+    "papercut-md": {
         "base_id_key": "airtable_base_id",
         "table_name_key": "airtable_table_name", 
         "field_name_key": "airtable_field_name",
         "pain_score": "md"
     },
-    "three": {
+    "papercut-big": {
         "base_id_key": "airtable_base_id",
         "table_name_key": "airtable_table_name",
         "field_name_key": "airtable_field_name", 
