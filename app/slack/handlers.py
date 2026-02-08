@@ -3,8 +3,9 @@ Slack event handlers for emoji reactions.
 Processes reaction events and triggers Airtable record creation.
 """
 
+import json
 import requests
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from app.config import get_settings
@@ -63,6 +64,25 @@ EMOJI_DESTINATION_MAP = {
         "pain_score": None
     }
 }
+
+
+def get_assignee_name(user_id: str) -> Optional[str]:
+    """
+    Look up the Airtable Assignee name for a Slack user ID.
+    
+    Args:
+        user_id: The Slack user ID
+        
+    Returns:
+        The Assignee name if found, None otherwise
+    """
+    try:
+        settings = get_settings()
+        user_map = json.loads(settings.slack_user_map)
+        return user_map.get(user_id)
+    except (json.JSONDecodeError, Exception) as e:
+        logger.error(f"Error parsing SLACK_USER_MAP: {e}")
+        return None
 
 
 def handle_reaction_added(event: Dict[str, Any]) -> bool:
@@ -131,6 +151,9 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         user_info = slack_client.get_user_info(user_id)
         channel_info = slack_client.get_channel_info(channel_id)
         
+        # Look up assignee name from Slack user ID
+        assignee_name = get_assignee_name(user_id)
+        
         # Create context for logging
         context = {
             "reactor_user": user_info.get("name") if user_info else user_id,
@@ -142,6 +165,7 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             "timestamp": datetime.utcnow().isoformat(),
             "pain_score": pain_score,  # Add pain score to context
             "emoji_config": emoji_config,  # Add emoji configuration to context
+            "assignee_name": assignee_name,  # Add assignee name to context
         }
         
         logger.info(f"Processing {reaction} reaction", context)
@@ -236,6 +260,11 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         pain_score = context.get("pain_score")
         if pain_score:
             fields["Pain Score"] = pain_score
+
+        # Add assignee if we have a mapping for this user
+        assignee_name = context.get("assignee_name")
+        if assignee_name:
+            fields["Assignee"] = assignee_name
 
         # Add image attachments if any are present
         image_attachments = extract_image_attachments(message)

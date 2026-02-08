@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     changelog_airtable_table_name: str
     changelog_airtable_field_name: str
     
+    # User mapping (Slack user ID -> Airtable Assignee name)
+    slack_user_map: str = "{}"  # JSON string
+    
     # App Configuration
     environment: str = "development"
     log_level: str = "INFO"
