@@ -62,6 +62,31 @@ EMOJI_DESTINATION_MAP = {
         "table_name_key": "changelog_airtable_table_name",
         "field_name_key": "changelog_airtable_field_name",
         "pain_score": None
+    },
+    # Content Ideas emojis (separate base)
+    "content-twitter-article": {
+        "base_id_key": "content_ideas_airtable_base_id",
+        "table_name_key": "content_ideas_airtable_table_name",
+        "field_name_key": "content_ideas_airtable_field_name",
+        "pain_score": None,
+        "content_type": "Twitter Article",
+        "slack_link_field_name": "Slack Thread"
+    },
+    "content-twitter-post": {
+        "base_id_key": "content_ideas_airtable_base_id",
+        "table_name_key": "content_ideas_airtable_table_name",
+        "field_name_key": "content_ideas_airtable_field_name",
+        "pain_score": None,
+        "content_type": "Twitter Post",
+        "slack_link_field_name": "Slack Thread"
+    },
+    "content-blog-post": {
+        "base_id_key": "content_ideas_airtable_base_id",
+        "table_name_key": "content_ideas_airtable_table_name",
+        "field_name_key": "content_ideas_airtable_field_name",
+        "pain_score": None,
+        "content_type": "Blog Post",
+        "slack_link_field_name": "Slack Thread"
     }
 }
 
@@ -154,6 +179,14 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
         # Look up assignee name from Slack user ID
         assignee_name = get_assignee_name(user_id)
         
+        # Get content type if specified in emoji config
+        content_type = emoji_config.get("content_type") if emoji_config else None
+        
+        # Get Slack permalink if this emoji requires it
+        slack_link = None
+        if emoji_config and emoji_config.get("slack_link_field_name"):
+            slack_link = slack_client.get_message_permalink(channel_id, message_ts)
+        
         # Create context for logging
         context = {
             "reactor_user": user_info.get("name") if user_info else user_id,
@@ -166,6 +199,8 @@ def handle_reaction_added(event: Dict[str, Any]) -> bool:
             "pain_score": pain_score,  # Add pain score to context
             "emoji_config": emoji_config,  # Add emoji configuration to context
             "assignee_name": assignee_name,  # Add assignee name to context
+            "content_type": content_type,  # Add content type to context
+            "slack_link": slack_link,  # Add slack link to context
         }
         
         logger.info(f"Processing {reaction} reaction", context)
@@ -249,22 +284,36 @@ def create_airtable_record(message_text: str, message: Dict[str, Any], context: 
         table_name = getattr(settings, table_name_key)
         field_name = getattr(settings, field_name_key)
         
-        # Prepare record fields - use status from emoji config or default to "Intake"
-        status = emoji_config.get("status", "Intake")
+        # Prepare record fields - only add Status if not a content idea emoji
         fields = {
             field_name: message_text,
-            "Status": status,
         }
+        
+        # Add Status field unless this is a content idea (which doesn't use Status)
+        if not emoji_config.get("content_type"):
+            status = emoji_config.get("status", "Intake")
+            fields["Status"] = status
 
         # Add pain score to the record if it exists
         pain_score = context.get("pain_score")
         if pain_score:
             fields["Pain Score"] = pain_score
 
-        # Add assignee if we have a mapping for this user
+        # Add assignee if we have a mapping for this user (skip for content emojis)
         assignee_name = context.get("assignee_name")
-        if assignee_name:
+        if assignee_name and not emoji_config.get("content_type"):
             fields["Assignee"] = assignee_name
+        
+        # Add content type if it exists
+        content_type = context.get("content_type")
+        if content_type:
+            fields["Type of Content"] = content_type
+        
+        # Add Slack link if it exists and field name is specified
+        slack_link = context.get("slack_link")
+        slack_link_field_name = emoji_config.get("slack_link_field_name")
+        if slack_link and slack_link_field_name:
+            fields[slack_link_field_name] = slack_link
 
         # Add image attachments if any are present
         image_attachments = extract_image_attachments(message)

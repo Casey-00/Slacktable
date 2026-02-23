@@ -181,6 +181,39 @@ class SlackClient:
                 "error_code": e.response["error"]
             })
             return None
+    
+    def get_message_permalink(self, channel_id: str, message_ts: str) -> Optional[str]:
+        """
+        Get a permalink to a specific message.
+        
+        Args:
+            channel_id: The channel ID where the message is located
+            message_ts: The timestamp of the message
+            
+        Returns:
+            Permalink URL or None if unable to generate
+        """
+        try:
+            response = self.client.chat_getPermalink(
+                channel=channel_id,
+                message_ts=message_ts
+            )
+            permalink = response.get("permalink")
+            logger.debug("Retrieved message permalink", {
+                "channel_id": channel_id,
+                "message_ts": message_ts,
+                "permalink": permalink
+            })
+            return permalink
+            
+        except SlackApiError as e:
+            logger.error("Failed to get message permalink", {
+                "channel_id": channel_id,
+                "message_ts": message_ts,
+                "error": str(e),
+                "error_code": e.response["error"]
+            })
+            return None
 
 
 # Lazy Slack client instance
